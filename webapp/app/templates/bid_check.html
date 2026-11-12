@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>开标批次核对</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+         background: #f0f2f5; color: #1f2937; }
+  header { background: #1d4ed8; color: #fff; padding: 20px 32px; }
+  header h1 { margin: 0 0 6px; font-size: 22px; }
+  header p { margin: 0; font-size: 13px; opacity: .85; }
+  header nav { margin-top: 10px; font-size: 13px; }
+  header nav a { color: #fff; opacity: .85; text-decoration: none; margin-right: 16px; }
+  header nav a:hover { opacity: 1; text-decoration: underline; }
+  main { max-width: 1400px; margin: 24px auto; padding: 0 20px; }
+  .card { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
+          box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  form { display: flex; gap: 12px; flex-wrap: wrap; }
+  input[name="url"] { flex: 1 1 520px; padding: 11px 14px; border: 1px solid #cbd5e1;
+                      border-radius: 8px; font-size: 14px; }
+  input[name="batch"] { flex: 0 1 220px; padding: 11px 14px; border: 1px solid #cbd5e1;
+                        border-radius: 8px; font-size: 14px; }
+  button { padding: 11px 28px; background: #1d4ed8; color: #fff; border: none;
+           border-radius: 8px; font-size: 14px; cursor: pointer; }
+  button:hover { background: #1e40af; }
+  .hint { margin-top: 10px; font-size: 12px; color: #64748b; line-height: 1.7; }
+  .hint code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+  .form-error { margin-top: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+                border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+  .verdict { border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; border: 1px solid #e2e8f0; }
+  .verdict h2 { margin: 0 0 6px; font-size: 20px; }
+  .verdict p { margin: 0; font-size: 13px; line-height: 1.7; }
+  .verdict-一致 { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .verdict-存在差异 { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+  .verdict-存在冲突 { background: #fdf2f8; border-color: #fbcfe8; color: #9d174d; }
+  .verdict-无法核定 { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #475569; margin-bottom: 14px; }
+  .meta-row span { background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 999px; }
+  h2 { font-size: 16px; margin: 0 0 14px; }
+  h3 { font-size: 14px; margin: 18px 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #e2e8f0; padding: 9px 10px; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; white-space: nowrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+           font-weight: 600; white-space: nowrap; }
+  .badge-一致 { background: #dcfce7; color: #166534; }
+  .badge-存在差异 { background: #ffedd5; color: #9a3412; }
+  .badge-报价冲突 { background: #fce7f3; color: #9d174d; }
+  .badge-无法核定 { background: #e2e8f0; color: #475569; }
+  .note { color: #64748b; font-size: 12px; margin-top: 4px; line-height: 1.6; }
+  .problem-list { margin: 6px 0 0; padding-left: 20px; font-size: 13px; }
+  .problem-list li { margin-bottom: 6px; word-break: break-all; }
+  .problem-kind { display: inline-block; background: #fee2e2; color: #991b1b; border-radius: 4px;
+                  padding: 1px 7px; font-size: 11px; margin-right: 6px; }
+  .errors { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px;
+            padding: 12px 16px; font-size: 13px; }
+  .source-links { margin: 0; padding-left: 16px; font-size: 12px; }
+  .source-links li { margin-bottom: 3px; word-break: break-all; }
+  .source-links a { color: #1d4ed8; text-decoration: none; }
+  .source-links a:hover { text-decoration: underline; }
+  .diff-neg { color: #b91c1c; font-weight: 600; }
+  .diff-pos { color: #9a3412; font-weight: 600; }
+  details { margin-top: 10px; }
+  details summary { cursor: pointer; color: #1d4ed8; font-size: 12px; }
+  .empty { text-align: center; color: #64748b; padding: 32px; font-size: 14px; }
+  .tag { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 4px;
+         padding: 1px 7px; font-size: 11px; margin-right: 6px; }
+  .tag-warn { background: #fef3c7; color: #92400e; }
+</style>
+</head>
+<body>
+<header>
+  <h1>开标批次核对</h1>
+  <p>读取记录目录、各标段企业唱标明细与人数/最低报价汇总；修订一致且抓取完整时，才核对汇总是否漏记投标人。</p>
+  <nav>
+    <a href="/">招标延期核对</a>
+    <a href="/bid-check">开标批次核对</a>
+  </nav>
+</header>
+<main>
+  <div class="card">
+    <form method="get" action="/bid-check">
+      <input type="url" name="url" value="{{ entry_url }}" placeholder="记录目录首页 URL，例如 http://example-site/records/B2026-001/index.html" required>
+      <input type="text" name="batch" value="{{ batch_no }}" placeholder="批次号，例如 B2026-001" required>
+      <button type="submit">核对开标批次</button>
+    </form>
+    <div class="hint">
+      示例站点入口（Docker 内网地址，容器间抓取；链接经本机代理打开）：
+      <code>http://example-site/records/B2026-001/index.html</code>，批次号 <code>B2026-001</code>；
+      也可填批次选择页 <code>http://example-site/records/index.html</code>，程序会按批次号定位批次目录。
+      其他示例见 <code>B2026-002</code>（漏记差异）、<code>B2026-003</code>（报价冲突）、
+      <code>B2026-004</code>（修订号不一致）、<code>B2026-005</code>（明细页读取失败）、
+      <code>B2026-006</code>（触及目录页抓取上限）。
+    </div>
+    {% if form_error %}<div class="form-error">{{ form_error }}</div>{% endif %}
+  </div>
+
+  {% if report is not none %}
+  <div class="card">
+    <div class="verdict verdict-{{ report.status.value }}">
+      <h2>{{ report.status.value }}</h2>
+      <p>{{ report.verdict_note }}</p>
+    </div>
+    <div class="meta-row">
+      <span>批次号：{{ report.batch_no }}</span>
+      <span>目录首页修订号：{{ report.directory_revision or '未识别' }}</span>
+      <span>目录页：{{ report.directory_pages|length }}</span>
+      <span>标段：{{ report.sections|length }}</span>
+      <span>明细页：{{ report.detail_pages|length }}</span>
+      <span>汇总页：{{ report.summary_pages|length }}</span>
+      <span>问题：{{ report.problems|length }}</span>
+    </div>
+    {% if report.directory_home and report.directory_home != entry_url %}
+    <div class="note" style="margin-bottom:12px;">
+      入口为批次选择页，已按批次号定位到记录目录首页：
+      <a href="/view?url={{ report.directory_home|urlencode }}" target="_blank">{{ report.directory_home }}</a>
+    </div>
+    {% endif %}
+
+    {% if report.problems %}
+    <div class="errors">
+      <strong>无法核定 / 问题链接（{{ report.problems|length }}）</strong>
+      <ul class="problem-list">
+        {% for problem in report.problems %}
+        <li>
+          <span class="problem-kind">{{ problem.kind }}</span>
+          {{ problem.reason }}
+          {% if problem.url %}
+          ｜<a href="/view?url={{ problem.url|urlencode }}" target="_blank">{{ problem.url }}</a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if report.revisions %}
+    <details>
+      <summary>查看批次修订号来源（{{ report.revisions|length }} 个页面）</summary>
+      <table style="margin-top:8px;">
+        <thead><tr><th>页面类型</th><th>批次修订号</th><th>批次号</th><th>页面链接</th></tr></thead>
+        <tbody>
+          {% for item in report.revisions %}
+          <tr>
+            <td>{{ item.kind }}</td>
+            <td>{{ item.revision or '未识别' }}</td>
+            <td>{{ item.batch_no or '未识别' }}</td>
+            <td><a href="/view?url={{ item.url|urlencode }}" target="_blank">{{ item.url }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>逐标段核对与来源</h2>
+    {% if report.sections %}
+      {% if report.comparable %}
+      <p class="note" style="margin-bottom:10px;">
+        批次修订号一致、抓取完整，以下比较汇总与明细去重结果。人数差异 = 明细去重家数 − 汇总人数；
+        报价差异 = 明细最低报价 − 汇总最低报价。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>标段号</th><th>标段名称</th>
+            <th>汇总人数</th><th>明细去重家数</th><th>人数差异</th>
+            <th>汇总最低报价</th><th>明细最低报价</th><th>报价差异</th>
+            <th>核对状态</th><th>来源</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for section in report.sections %}
+          <tr>
+            <td style="white-space:nowrap;font-weight:600;">{{ section.section_no }}</td>
+            <td>{{ section.section_name }}</td>
+            <td>{{ section.summary_count if section.summary_count is not none else '—' }}</td>
+            <td>{{ section.detail_count if section.detail_count is not none else '—' }}</td>
+            <td>
+              {% if section.count_diff is none %}—
+              {% elif section.count_diff == 0 %}0
+              {% elif section.count_diff > 0 %}<span class="diff-pos">+{{ section.count_diff }}（明细多）</span>
+              {% else %}<span class="diff-neg">{{ section.count_diff }}（汇总多）</span>{% endif %}
+            </td>
+            <td>{{ section.summary_min|money }}</td>
+            <td>{{ section.detail_min|money }}</td>
+            <td>
+              {% if section.min_diff is none %}—
+              {% elif section.min_diff == 0 %}0.00
+              {% elif section.min_diff < 0 %}<span class="diff-neg">-{{ section.min_diff|abs|money }}</span>
+              {% else %}<span class="diff-pos">+{{ section.min_diff|money }}</span>{% endif %}
+            </td>
+            <td>
+              <span class="badge badge-{{ section.status }}">{{ section.status }}</span>
+              {% for note in section.notes %}<div class="note">{{ note }}</div>{% endfor %}
+            </td>
+            <td>
+              <ul class="source-links">
+                {% for link in section.directory_urls %}
+                <li>目录：<a href="/view?url={{ link|urlencode }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+                {% for link in section.detail_urls %}
+                <li>明细：<a href="/view?url={{ link|urlencode }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+                {% if section.summary_url %}
+                <li>汇总：<a href="/view?url={{ section.summary_url|urlencode }}" target="_blank">{{ section.summary_url }}</a></li>
+                {% endif %}
+              </ul>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="note" style="margin-bottom:10px;">
+        因存在读取失败、批次修订号不一致或抓取上限等问题，<strong>未比较</strong>汇总人数与最低报价。
+        下表仅展示已读取数据与来源，不构成核定结论。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>标段号</th><th>标段名称</th>
+            <th>已读取汇总人数</th><th>已读取明细去重家数</th>
+            <th>已读取汇总最低报价</th><th>已读取明细最低报价</th>
+            <th>核对状态</th><th>来源</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for section in report.sections %}
+          <tr>
+            <td style="white-space:nowrap;font-weight:600;">{{ section.section_no }}</td>
+            <td>{{ section.section_name }}</td>
+            <td>{{ section.summary_count if section.summary_count is not none else '—' }}</td>
+            <td>{{ section.detail_count if section.detail_count is not none else '—' }}</td>
+            <td>{{ section.summary_min|money }}</td>
+            <td>{{ section.detail_min|money }}</td>
+            <td>
+              <span class="badge badge-无法核定">{{ section.status }}</span>
+              {% for note in section.notes %}<div class="note">{{ note }}</div>{% endfor %}
+            </td>
+            <td>
+              <ul class="source-links">
+                {% for link in section.directory_urls %}
+                <li>目录：<a href="/view?url={{ link|urlencode }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+                {% for link in section.detail_urls %}
+                <li>明细：<a href="/view?url={{ link|urlencode }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+                {% if section.summary_url %}
+                <li>汇总：<a href="/view?url={{ section.summary_url|urlencode }}" target="_blank">{{ section.summary_url }}</a></li>
+                {% endif %}
+              </ul>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    {% else %}
+      <div class="empty">未读取到任何标段记录，请检查记录目录地址或批次号。</div>
+    {% endif %}
+  </div>
+
+  {% if report.conflicts %}
+  <div class="card">
+    <h2>报价冲突（同一标段、同一统一社会信用代码报价不同）</h2>
+    <p class="note" style="margin-bottom:10px;">
+      冲突报价均保留原文与来源，不任选其中一个参与最低报价核算。
+    </p>
+    <table>
+      <thead>
+        <tr><th>标段号</th><th>标段名称</th><th>统一社会信用代码</th><th>企业名称</th><th>报价记录与来源</th></tr>
+      </thead>
+      <tbody>
+        {% for conflict in report.conflicts %}
+        <tr>
+          <td style="white-space:nowrap;font-weight:600;">{{ conflict.section_no }}</td>
+          <td>{{ conflict.section_name }}</td>
+          <td style="font-family:monospace;">{{ conflict.credit_code }}</td>
+          <td>{{ conflict.enterprise_names|join('、') }}</td>
+          <td>
+            <ul class="source-links">
+              {% for occurrence in conflict.occurrences %}
+              <li>
+                <span class="tag tag-warn">报价 {{ occurrence.quote_text or '未解析' }}</span>
+                {% if occurrence.quote is not none %}（规范值 {{ occurrence.quote|money }}）{% endif %}
+                <a href="/view?url={{ occurrence.url|urlencode }}" target="_blank">{{ occurrence.url }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  {% endif %}
+</main>
+</body>
+</html>

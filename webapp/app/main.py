@@ -1,4 +1,4 @@
-"""FastAPI 入口：列表页地址录入、抓取归并、结果展示、页面代理。"""
+"""FastAPI 入口：招标延期核对、开标批次核对、页面代理。"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,13 +10,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
+from .bidcheck import format_money, verify_batch
 from .crawler import REQUEST_TIMEOUT, USER_AGENT, crawl
 from .merger import merge_announcements
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates.env.filters["money"] = format_money
 
-app = FastAPI(title="招标延期核对助手")
+app = FastAPI(title="招标采购核对助手")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -32,6 +34,33 @@ def index(request: Request, url: str | None = None) -> HTMLResponse:
         context["report"] = report
         context["results"] = merge_announcements(report.announcements)
     return templates.TemplateResponse("index.html", context)
+
+
+@app.get("/batch-check", response_class=HTMLResponse)
+@app.get("/bid-check", response_class=HTMLResponse)
+def bid_check(
+    request: Request,
+    url: str | None = None,
+    batch: str | None = None,
+    batch_no: str | None = None,
+    directory_url: str | None = None,
+) -> HTMLResponse:
+    """开标批次核对页：记录目录 + 批次号 -> 逐标段核对人数与最低报价。"""
+    entry_url = (url or directory_url or "").strip()
+    batch_value = (batch or batch_no or "").strip()
+    context = {
+        "request": request,
+        "entry_url": entry_url,
+        "batch_no": batch_value,
+        "report": None,
+        "form_error": "",
+    }
+    if entry_url or batch_value:
+        if not entry_url or not batch_value:
+            context["form_error"] = "请同时填写记录目录 URL 和批次号。"
+        else:
+            context["report"] = verify_batch(entry_url, batch_value)
+    return templates.TemplateResponse("bid_check.html", context)
 
 
 @app.get("/health")

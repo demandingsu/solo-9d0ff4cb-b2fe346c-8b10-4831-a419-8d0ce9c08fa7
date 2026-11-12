@@ -11,6 +11,9 @@
   header { background: #1d4ed8; color: #fff; padding: 20px 32px; }
   header h1 { margin: 0 0 6px; font-size: 22px; }
   header p { margin: 0; font-size: 13px; opacity: .85; }
+  header nav { margin-top: 10px; font-size: 13px; }
+  header nav a { color: #fff; opacity: .85; text-decoration: none; margin-right: 16px; }
+  header nav a:hover { opacity: 1; text-decoration: underline; }
   main { max-width: 1180px; margin: 24px auto; padding: 0 20px; }
   .card { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
           box-shadow: 0 1px 3px rgba(0,0,0,.08); }
@@ -54,6 +57,10 @@
 <header>
   <h1>招标延期核对助手</h1>
   <p>输入招标公告列表页地址，沿同站点“下一页”抓取详情，按项目编号归并公告并核对当前投标截止时间。</p>
+  <nav>
+    <a href="/">招标延期核对</a>
+    <a href="/bid-check">开标批次核对</a>
+  </nav>
 </header>
 <main>
   <div class="card">

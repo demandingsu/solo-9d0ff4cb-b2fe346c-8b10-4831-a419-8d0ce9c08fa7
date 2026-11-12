@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>开标记录目录</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="crumb"><a href="../index.html">返回示例采购信息平台</a></p>
+  <h1>开标记录目录（示例）</h1>
+  <p class="content">选择批次进入记录目录首页，再把该页地址与批次号填入核对页面。各批次覆盖一致、漏记、冲突、修订不一致、读取失败和抓取上限等场景。</p>
+  <table class="fields">
+    <tr><th>批次号</th><th>批次修订号</th><th>标段数</th><th>场景说明</th></tr>
+        <tr><td><a href="B2026-001/index.html">B2026-001</a></td><td>R2026-11-11-01</td><td>3</td><td>核对一致：目录、明细、汇总修订号相同，人数与最低报价均匹配。</td></tr>
+    <tr><td><a href="B2026-002/index.html">B2026-002</a></td><td>R2026-11-11-02</td><td>2</td><td>汇总漏记：SG-01 明细有 3 家、汇总只记 2 家，且汇总最低报价高于明细最低报价。</td></tr>
+    <tr><td><a href="B2026-003/index.html">B2026-003</a></td><td>R2026-11-11-03</td><td>2</td><td>报价冲突：SG-01 同一统一社会信用代码出现两个不同报价，冲突标段不核算最低报价。</td></tr>
+    <tr><td><a href="B2026-004/index.html">B2026-004</a></td><td>R2026-11-11-04</td><td>2</td><td>修订号不一致：SG-01 的汇总页修订号为 R2026-11-11-04-B，与目录/明细不同。</td></tr>
+    <tr><td><a href="B2026-005/index.html">B2026-005</a></td><td>R2026-11-11-05</td><td>2</td><td>页面读取失败：SG-02 的唱标明细链接存在，但明细页缺失（404）。</td></tr>
+    <tr><td><a href="B2026-006/index.html">B2026-006</a></td><td>R2026-11-11-06</td><td>12</td><td>触及抓取上限：目录共 12 页，超过目录页上限 10 页，无法确认已完整遍历。</td></tr>
+  </table>
+</div>
+</body>
+</html>
